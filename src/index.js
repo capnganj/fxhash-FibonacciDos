@@ -54,16 +54,20 @@ function init() {
   } );
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.shadowMap.enabled = true;
   renderer.domElement.id = "hashish";
   document.body.appendChild( renderer.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 100 );
-  camera.position.set( 2, 2, 2 );
+  camera.position.set( -5, 10, 5 );
 
   //lights
-  const p1 = new THREE.PointLight( 0xcccccc, 0.666 );
+  const p1 = new THREE.PointLight( 0xcccccc, 0.333 );
   p1.position.set( 5, 10, 5);
   scene.add(p1);
+  const p2 = new THREE.PointLight( 0xcccccc, 0.333 );
+  p2.position.set( 7, 9, 5);
+  scene.add(p2);
   const amb = new THREE.AmbientLight( 0xcccccc, 0.666);
   scene.add(amb);
 
@@ -76,7 +80,7 @@ function init() {
   controls.dampingFactor = 0.2;
   //controls.autoRotate= true;
   controls.autoRotateSpeed = 0.5;
-  controls.maxDistance = 7;
+  controls.maxDistance = 15;
   controls.minDistance = 1;
 
 
@@ -84,11 +88,11 @@ function init() {
   //geometry!
 
   //toon geometry
-  let toonGeometry  = new THREE.SphereBufferGeometry(0.1);
+  let toonGeometry  = new THREE.SphereBufferGeometry(0.5, 60, 60);
 
   //toon material 
   const format = ( renderer.capabilities.isWebGL2 ) ? THREE.RedFormat : THREE.LuminanceFormat;
-  const colors = new Uint8Array(7);
+  const colors = new Uint8Array(4);
   for (let c = 0; c < colors.length; c++) {
     colors[c] = (c/colors.length) * 256;
   }
@@ -100,11 +104,12 @@ function init() {
   });
 
   //mesh instance geometry for nappiness and battery life
-  const iMesh = new THREE.InstancedMesh(toonGeometry, toon, 100);
+  const iMesh = new THREE.InstancedMesh(toonGeometry, toon, 300);
   scene.add(iMesh)
 
   //loop over torus and instantiate meshes with random colors
-  for (let i = 0; i < 100; i++) {
+  const fibFactor = feet.map(fxrand(), 0, 1, 1.47, 1.53);
+  for (let i = 0; i < 300; i++) {
     
     //matrix
     const m = new THREE.Matrix4();
@@ -113,14 +118,27 @@ function init() {
 
     //position
     const r = 1;
-    m.setPosition(feet.map(fxrand(),0, 1, -r, r), feet.map(fxrand(),0, 1, -r, r), feet.map(fxrand(),0, 1, -r, r));
+    const x = i * fibFactor ;
+    const xx = (Math.cos(x) * x)/80;
+    const zz = (Math.sin(x) * x)/80;
 
-    iMesh.setMatrixAt(i/3, m);
+    //try a function to fall along?
+    const y = feet.map(i, 0, 299, 0, 1);
+    const ySq = Math.pow(y, 2.5);
+    const yy = feet.map(ySq, 0, 1, 3, -4)
+
+    m.setPosition(xx, yy, zz);
+
+    const s = feet.map(ySq, 0, 1, 0.6, 9.5);
+    m.scale(new THREE.Vector3(s,s,s));
+
+    iMesh.setMatrixAt(i, m);
 
 
 
     //color
-    const rgb = feet.interpolateFn(fxrand());
+    const noise = feet.map(fxrand(), 0, 1, -0.1, 0.1)
+    const rgb = feet.interpolateFn((i/300) + noise);
     const col = new THREE.Color(rgb.r/255, rgb.g/255, rgb.b/255);
     iMesh.setColorAt(i, col);
     
