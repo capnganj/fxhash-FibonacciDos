@@ -33,6 +33,7 @@ class Features {
             factor: 0.0,
             power: 0.0,
         }
+        this.setFlowerGeometry();
 
         //crystals 
         this.crystalGeometry = {
@@ -261,6 +262,13 @@ class Features {
             this.interpolateFn(this.map(fxrand(), 0, 1, 0.56, 0.8));
             this.background.value = col;
         }
+    }
+
+    setFlowerGeometry() {
+        this.flowerGeometry.width = this.map(fxrand(), 0, 1, 60, 100)
+        this.flowerGeometry.height = this.map(fxrand(), 0, 1, 5, 9)
+        this.flowerGeometry.factor = this.map(fxrand(), 0, 1, 1.48, 1.49)
+        this.flowerGeometry.power = this.map(fxrand(), 0, 1, 1.2, 3.5)
     }
 }
 

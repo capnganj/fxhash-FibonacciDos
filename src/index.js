@@ -108,28 +108,26 @@ function init() {
   scene.add(iMesh)
 
   //fibGeometry loop - matrix and colors
-  const fibFactor = feet.map(fxrand(), 0, 1, 1.47, 1.53);
+  const fibFactor = feet.flowerGeometry.factor;
   for (let i = 0; i < 300; i++) {
     
     //matrix
     const m = new THREE.Matrix4();
 
-    
-
     //position
     const r = 1;
     const x = i * fibFactor ;
-    const xx = (Math.cos(x) * x)/100;
-    const zz = (Math.sin(x) * x)/100;
+    const xx = (Math.cos(x) * x)/feet.flowerGeometry.width;
+    const zz = (Math.sin(x) * x)/feet.flowerGeometry.width;
 
     //try a function to fall along?
     const y = feet.map(i, 0, 299, 0, 1);
-    const ySq = Math.pow(y, 3.5);
-    const yy = feet.map(ySq, 0, 1, 7, -1)
+    const ySq = Math.pow(y, feet.flowerGeometry.power);
+    const yy = feet.map(ySq, 0, 1, feet.flowerGeometry.height, -1)
 
     m.setPosition(xx, yy, zz);
 
-    const s = feet.map(ySq, 0, 1, 0.6, 6.5);
+    const s = feet.map(ySq, 0, 1, 0.7, 5.5);
     m.scale(new THREE.Vector3(s,s,s));
 
     iMesh.setMatrixAt(i, m);
