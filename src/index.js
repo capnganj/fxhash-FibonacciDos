@@ -48,6 +48,7 @@ function init() {
   scene = new THREE.Scene();
   const sCol = new THREE.Color(feet.background.value.r/255, feet.background.value.g/255, feet.background.value.b/255);
   scene.background = sCol;
+  scene.fog = new THREE.Fog(sCol, 5, 27)
 
   renderer = new THREE.WebGLRenderer( { 
     antialias: true,
@@ -60,7 +61,7 @@ function init() {
   document.body.appendChild( renderer.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 100 );
-  camera.position.set( 17, 13, 0 );
+  camera.position.set( 13, 8, 0 );
 
   //lights
   const p1 = new THREE.DirectionalLight( );
@@ -88,7 +89,7 @@ function init() {
   controls.dampingFactor = 0.2;
   //controls.autoRotate= true;
   controls.autoRotateSpeed = 0.5;
-  controls.maxDistance = 25;
+  controls.maxDistance = 35;
   controls.minDistance = 1;
 
 
@@ -101,48 +102,69 @@ function init() {
     roughness:0.2
   });
 
-  //mesh instance geometry for snappiness and battery life
-  const iMesh = new THREE.InstancedMesh(toonGeometry, stand, 300);
-  iMesh.castShadow = true;
-  iMesh.receiveShadow = true;
-  scene.add(iMesh)
+  const elle = new THREE.EllipseCurve(0,0, 6, 12, 0, Math.PI*2, false, 0);
+  const elle2 = new THREE.EllipseCurve(0,0,12,16,Math.PI/2,Math.PI+2,false, 0);
+  const numShrooms = 9;
+  const basePointsOnXY = [];
+  const ellePts = elle.getPoints(numShrooms);
+  const elle2Pts = elle2.getPoints(numShrooms);
+  for (let i = 0; i < numShrooms; i++) {
+    basePointsOnXY.push(ellePts[i])
+  }
+  //basePointsOnXY.push(new THREE.Vector2(0,0))
+  for (let i = 0; i < numShrooms; i++) {
+    basePointsOnXY.push(elle2Pts[i])
+  }
+
+  
 
   //fibGeometry loop - matrix and colors
   const fibFactor = feet.flowerGeometry.factor;
-  for (let i = 0; i < 300; i++) {
+  for (let n = 0; n < numShrooms * 2  ; n++) { 
+    //mesh instance geometry for snappiness and battery life
+    const iMesh = new THREE.InstancedMesh(toonGeometry, stand, 300);
+    iMesh.castShadow = true;
+    iMesh.receiveShadow = true;
+    scene.add(iMesh)
+
+    const flowerFeatures = new Features();
+    for (let i = 0; i < 300; i++) {
     
-    //matrix
-    const m = new THREE.Matrix4();
-
-    //position
-    const r = 1;
-    const x = i * fibFactor ;
-    const xx = (Math.cos(x) * x)/feet.flowerGeometry.width;
-    const zz = (Math.sin(x) * x)/feet.flowerGeometry.width;
-
-    //try a function to fall along?
-    const y = feet.map(i, 0, 299, 0, 1);
-    const ySq = Math.pow(y, feet.flowerGeometry.power);
-    const yy = feet.map(ySq, 0, 1, feet.flowerGeometry.height, -1)
-
-    m.setPosition(xx, yy, zz);
-
-    const s = feet.map(ySq, 0, 1, 0.7, 5.5);
-    m.scale(new THREE.Vector3(s,s,s));
-
-    iMesh.setMatrixAt(i, m);
-
-
-
-    //color
-    const noise = feet.map(fxrand(), 0, 1, -feet.noise.value, feet.noise.value)
-    const rgb = feet.interpolateFn((feet.color.inverted ? 1-(i/300) : (i/300)) + noise);
-    const col = new THREE.Color(rgb.r/255, rgb.g/255, rgb.b/255);
-    iMesh.setColorAt(i, col);
-    
+      //matrix
+      const m = new THREE.Matrix4();
+  
+      //position
+      const r = 1;
+      const x = i * fibFactor ;
+      const xx = (Math.cos(x) * x)/flowerFeatures.flowerGeometry.width;
+      const zz = (Math.sin(x) * x)/flowerFeatures.flowerGeometry.width;
+  
+      //try a function to fall along?
+      const y = feet.map(i, 0, 299, 0, 1);
+      const ySq = Math.pow(y, flowerFeatures.flowerGeometry.power);
+      const yy = feet.map(ySq, 0, 1, flowerFeatures.flowerGeometry.height, -3)
+  
+      m.setPosition(xx, yy, zz);
+  
+      const s = feet.map(ySq, 0, 1, 0.7, 5.5);
+      m.scale(new THREE.Vector3(s,s,s));
+  
+      iMesh.setMatrixAt(i, m);
+  
+  
+  
+      //color
+      const noise = feet.map(fxrand(), 0, 1, -feet.noise.value, feet.noise.value)
+      const rgb = feet.interpolateFn((feet.color.inverted ? 1-(i/300) : (i/300)) + noise);
+      const col = new THREE.Color(rgb.r/255, rgb.g/255, rgb.b/255);
+      iMesh.setColorAt(i, col);
+      
+    }
+    iMesh.position.set(basePointsOnXY[n].x,0,basePointsOnXY[n].y) // <- this works for the whole mesh!  Should we loop over the loop? -- multiple flowers?
+    iMesh.instanceMatrix.needsUpdate = true;
   }
-  //iMesh.position.set(-5,0,0) // <- this works for the whole mesh!  Should we loop over the loop? -- multiple flowers?
-  iMesh.instanceMatrix.needsUpdate = true;
+  
+  
 
   //crystals 
   const crystalColor = feet.background.value
@@ -158,12 +180,12 @@ function init() {
   mesh.position.set(0, -1.8, -16)
   mesh.receiveShadow = true;
   mesh.castShadow = true;
-  scene.add(mesh);
+  //scene.add(mesh);
   const mesh2 = new THREE.Mesh(Math.round(fxrand()) ? crystalGeometry2 : crystalGeometry3, crystalMat)
   mesh2.position.set(0, -1.8, 16)
   mesh2.receiveShadow = true;
   mesh2.castShadow = true;
-  scene.add(mesh2);
+  //scene.add(mesh2);
 
   //stem
   // const stemCrv = new THREE.CubicBezierCurve(

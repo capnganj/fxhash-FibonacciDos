@@ -265,8 +265,8 @@ class Features {
     }
 
     setFlowerGeometry() {
-        this.flowerGeometry.width = this.map(fxrand(), 0, 1, 60, 100)
-        this.flowerGeometry.height = this.map(fxrand(), 0, 1, 5, 9)
+        this.flowerGeometry.width = this.map(fxrand(), 0, 1,   100, 200)
+        this.flowerGeometry.height = this.map(fxrand(), 0, 1, 2, 6)
         this.flowerGeometry.factor = this.map(fxrand(), 0, 1, 1.48, 1.49)
         this.flowerGeometry.power = this.map(fxrand(), 0, 1, 1.2, 3.5)
     }
