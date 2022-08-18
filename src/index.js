@@ -5,7 +5,10 @@
 import { Features } from './Features';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { OutlineEffect } from 'three/examples/jsm/effects/OutlineEffect';
+
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass';
 
 
 //1) - generate fxhash features - global driving parameters
@@ -40,7 +43,8 @@ let previewed = false;
 
 
 //global vars 
-var controls, renderer, scene, camera;
+let controls, renderer, scene, camera;
+let postprocessing = {}
 init();
 
 function init() {
@@ -48,7 +52,7 @@ function init() {
   scene = new THREE.Scene();
   const sCol = new THREE.Color(feet.background.value.r/255, feet.background.value.g/255, feet.background.value.b/255);
   scene.background = sCol;
-  scene.fog = new THREE.Fog(sCol, 5, 27)
+  scene.fog = new THREE.Fog(sCol, 5, 26)
 
   renderer = new THREE.WebGLRenderer( { 
     antialias: true,
@@ -77,7 +81,7 @@ function init() {
   p1.shadow.camera.bottom = -d;
   p1.shadow.camera.far = 1000;
   scene.add(p1);
-  
+  postprocessing.directionalLight = p1;
   
   const amb = new THREE.AmbientLight( 0xcccccc, 0.5);
   scene.add(amb);
@@ -85,12 +89,15 @@ function init() {
 
   // controls
   controls = new OrbitControls( camera, renderer.domElement );
-  controls.enableDamping=true;
-  controls.dampingFactor = 0.2;
+  //controls.enableDamping=true;
+  //controls.dampingFactor = 0.2;
   //controls.autoRotate= true;
-  controls.autoRotateSpeed = 0.5;
+  //controls.autoRotateSpeed = 0.5;
   controls.maxDistance = 35;
   controls.minDistance = 1;
+  controls.enableZoom = false;
+  controls.enablePan = false;
+  controls.enableRotate = false;
 
 
 
@@ -219,11 +226,40 @@ function init() {
   plnMesh.receiveShadow = true;
   scene.add(plnMesh)
 
+  //postporocessing stuff
+  initPostprocessing();
+  renderer.autoClear = false;
+
 
   //set up resize listener and let it rip!
   window.addEventListener( 'resize', onWindowResize );
   renderer.domElement.addEventListener( 'dblclick', toggleAutorotate);
   animate();
+}
+
+
+function initPostprocessing() {
+  //renderrender
+  const renderPass = new RenderPass( scene, camera);
+  //camera bokeh
+  const bokehPass = new BokehPass( scene, camera, {
+    focus: 7.0,
+    aperture: 0.0007,
+    maxblur: 0.01,
+
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  const composer = new EffectComposer( renderer );
+
+  //render
+  composer.addPass(renderPass);
+  //camera blur
+  composer.addPass(bokehPass);
+
+  postprocessing.composer = composer;
+  //postprocessing.bokeh = bokehPass;
 }
 
 
@@ -239,7 +275,12 @@ function onWindowResize() {
 
 function animate() {
 
-  controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  //controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+
+  //change focal length along a sine wave?
+  const seconds = performance.now() / 10000;
+  postprocessing.directionalLight.position.set(6, 6, feet.map(Math.cos(seconds), -1, 1, 2.5, 4.5));
+
   requestAnimationFrame( animate );
   render();
 
@@ -247,7 +288,7 @@ function animate() {
 
 function render() {
 
-  renderer.render( scene, camera );
+  postprocessing.composer.render( scene, camera );
 
   if(previewed == false && renderer.info.render.frame > 1){
     fxpreview();
