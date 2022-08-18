@@ -40,7 +40,7 @@ let previewed = false;
 
 
 //global vars 
-var controls, renderer, scene, camera, effect;
+var controls, renderer, scene, camera;
 init();
 
 function init() {
@@ -59,20 +59,25 @@ function init() {
   document.body.appendChild( renderer.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 100 );
-  camera.position.set( -5, 10, 5 );
+  camera.position.set( 11, 11, -14 );
 
   //lights
-  const p1 = new THREE.PointLight( 0xcccccc, 0.333 );
-  p1.position.set( 5, 10, 5);
+  const p1 = new THREE.DirectionalLight( );
+  p1.intensity = 0.8
+  p1.position.set( 6, 6, 5);
+  p1.castShadow = true;
+  p1.shadow.mapSize.width = 2048;
+  p1.shadow.mapSize.height = 2048;
+  const d = 10;
+  p1.shadow.camera.left = -d;
+  p1.shadow.camera.right = d;
+  p1.shadow.camera.top = d;
+  p1.shadow.camera.bottom = -d;
+  p1.shadow.camera.far = 1000;
   scene.add(p1);
-  const p2 = new THREE.PointLight( 0xcccccc, 0.333 );
-  p2.position.set( 7, 9, 5);
-  scene.add(p2);
-  const amb = new THREE.AmbientLight( 0xcccccc, 0.666);
+  const amb = new THREE.AmbientLight( 0xcccccc, 0.5);
   scene.add(amb);
 
-  //outline effect
-  effect = new OutlineEffect( renderer );
 
   // controls
   controls = new OrbitControls( camera, renderer.domElement );
@@ -80,7 +85,7 @@ function init() {
   controls.dampingFactor = 0.2;
   //controls.autoRotate= true;
   controls.autoRotateSpeed = 0.5;
-  controls.maxDistance = 15;
+  controls.maxDistance = 25;
   controls.minDistance = 1;
 
 
@@ -88,26 +93,18 @@ function init() {
   //geometry!
 
   //toon geometry
-  let toonGeometry  = new THREE.SphereBufferGeometry(0.5, 60, 60);
-
-  //toon material 
-  const format = ( renderer.capabilities.isWebGL2 ) ? THREE.RedFormat : THREE.LuminanceFormat;
-  const colors = new Uint8Array(4);
-  for (let c = 0; c < colors.length; c++) {
-    colors[c] = (c/colors.length) * 256;
-  }
-  const gradientMap = new THREE.DataTexture(colors, colors.length, 1, format);
-  gradientMap.needsUpdate = true;
-  const toon = new THREE.MeshToonMaterial({
-    color: new THREE.Color(),
-    gradientMap: gradientMap
+  let toonGeometry  = new THREE.SphereBufferGeometry(0.5, 80, 80);
+  const stand = new THREE.MeshStandardMaterial({
+    roughness:0.2
   });
 
-  //mesh instance geometry for nappiness and battery life
-  const iMesh = new THREE.InstancedMesh(toonGeometry, toon, 300);
+  //mesh instance geometry for snappiness and battery life
+  const iMesh = new THREE.InstancedMesh(toonGeometry, stand, 300);
+  iMesh.castShadow = true;
+  iMesh.receiveShadow = true;
   scene.add(iMesh)
 
-  //loop over torus and instantiate meshes with random colors
+  //fibGeometry loop - matrix and colors
   const fibFactor = feet.map(fxrand(), 0, 1, 1.47, 1.53);
   for (let i = 0; i < 300; i++) {
     
@@ -119,17 +116,17 @@ function init() {
     //position
     const r = 1;
     const x = i * fibFactor ;
-    const xx = (Math.cos(x) * x)/80;
-    const zz = (Math.sin(x) * x)/80;
+    const xx = (Math.cos(x) * x)/100;
+    const zz = (Math.sin(x) * x)/100;
 
     //try a function to fall along?
     const y = feet.map(i, 0, 299, 0, 1);
-    const ySq = Math.pow(y, 2.5);
-    const yy = feet.map(ySq, 0, 1, 3, -4)
+    const ySq = Math.pow(y, 3.5);
+    const yy = feet.map(ySq, 0, 1, 7, -1)
 
     m.setPosition(xx, yy, zz);
 
-    const s = feet.map(ySq, 0, 1, 0.6, 9.5);
+    const s = feet.map(ySq, 0, 1, 0.6, 6.5);
     m.scale(new THREE.Vector3(s,s,s));
 
     iMesh.setMatrixAt(i, m);
@@ -144,6 +141,18 @@ function init() {
     
   }
   iMesh.instanceMatrix.needsUpdate = true;
+
+
+  //shadow plane
+  const plnGeom = new THREE.PlaneGeometry(100,100);
+  plnGeom.rotateX(Math.PI/-2);
+
+  const shadowMat = new THREE.ShadowMaterial()
+  shadowMat.opacity = 0.2;
+  const plnMesh = new THREE.Mesh(plnGeom, shadowMat);
+  plnMesh.position.y = -5;
+  plnMesh.receiveShadow = true;
+  scene.add(plnMesh)
 
 
   //set up resize listener and let it rip!
@@ -173,7 +182,7 @@ function animate() {
 
 function render() {
 
-  effect.render( scene, camera );
+  renderer.render( scene, camera );
 
   if(previewed == false && renderer.info.render.frame > 1){
     fxpreview();
@@ -194,21 +203,4 @@ function download() {
   link.download = 'Torus.png';
   link.href = document.getElementById('hashish').toDataURL()
   link.click();
-}
-
-function removeDuplicateVertices(vertices) {
-  var positionLookup = [];
-  var final = [];
-
-  for( let i = 0; i < vertices.length-3; i += 3 ) {
-      var index = vertices[i] + vertices[i + 1] + vertices[i + 2];
-
-      if( positionLookup.indexOf( index ) == -1 ) {
-          positionLookup.push( index );
-          final.push(vertices[i])
-          final.push(vertices[i+1])
-          final.push(vertices[i+2])
-      }
-  }
-  return final;
 }
