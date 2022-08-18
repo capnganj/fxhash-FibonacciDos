@@ -59,22 +59,24 @@ function init() {
   document.body.appendChild( renderer.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 100 );
-  camera.position.set( 11, 11, -14 );
+  camera.position.set( 17, 13, 0 );
 
   //lights
   const p1 = new THREE.DirectionalLight( );
   p1.intensity = 0.8
-  p1.position.set( 6, 6, 5);
+  p1.position.set( 6, 6, 4.5);
   p1.castShadow = true;
   p1.shadow.mapSize.width = 2048;
   p1.shadow.mapSize.height = 2048;
-  const d = 10;
+  const d = 15;
   p1.shadow.camera.left = -d;
   p1.shadow.camera.right = d;
   p1.shadow.camera.top = d;
   p1.shadow.camera.bottom = -d;
   p1.shadow.camera.far = 1000;
   scene.add(p1);
+  
+  
   const amb = new THREE.AmbientLight( 0xcccccc, 0.5);
   scene.add(amb);
 
@@ -135,12 +137,53 @@ function init() {
 
     //color
     const noise = feet.map(fxrand(), 0, 1, -0.1, 0.1)
-    const rgb = feet.interpolateFn((i/300) + noise);
+    const rgb = feet.interpolateFn(feet.color.inverted ? (i/300) : 1-(i/300) + noise);
     const col = new THREE.Color(rgb.r/255, rgb.g/255, rgb.b/255);
     iMesh.setColorAt(i, col);
     
   }
   iMesh.instanceMatrix.needsUpdate = true;
+
+  //crystals 
+  const crystalColor = feet.background.value
+  const crystalMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(crystalColor.r, crystalColor.g, crystalColor.b),
+    roughness: 0.8,
+    flatShading: true
+  })
+  const crystalGeometry = new THREE.IcosahedronBufferGeometry(3,1);
+  const crystalGeometry2 = new THREE.DodecahedronBufferGeometry(3);
+  const crystalGeometry3 = new THREE.OctahedronBufferGeometry(3,1);
+  const mesh = new THREE.Mesh(Math.round(fxrand()) ? crystalGeometry : crystalGeometry2, crystalMat);
+  mesh.position.set(0, -1.8, -16)
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+  scene.add(mesh);
+  const mesh2 = new THREE.Mesh(Math.round(fxrand()) ? crystalGeometry2 : crystalGeometry3, crystalMat)
+  mesh2.position.set(0, -1.8, 16)
+  mesh2.receiveShadow = true;
+  mesh2.castShadow = true;
+  scene.add(mesh2);
+
+  //stem
+  const stemCrv = new THREE.CubicBezierCurve(
+    new THREE.Vector2(0.25, -4),
+    new THREE.Vector2(7, -15),
+    new THREE.Vector2(3.5, 5 ),
+    new THREE.Vector2(2.5, 4.5)
+  )
+  const stemBuffer = new THREE.LatheBufferGeometry(stemCrv.getPoints(30), 90);
+  const col = feet.background.value
+  const stemMat = new THREE.MeshStandardMaterial( 
+    { 
+      color: new THREE.Color(col.r, col.g, col.b),
+      roughness: 0.5
+    }
+  );
+  const stemMesh = new THREE.Mesh(stemBuffer, stemMat);
+  stemMesh.castShadow = true;
+  stemMesh.receiveShadow = true;
+  //scene.add(stemMesh) //meh... better without 
 
 
   //shadow plane
@@ -150,7 +193,7 @@ function init() {
   const shadowMat = new THREE.ShadowMaterial()
   shadowMat.opacity = 0.2;
   const plnMesh = new THREE.Mesh(plnGeom, shadowMat);
-  plnMesh.position.y = -5;
+  plnMesh.position.y = -4.2;
   plnMesh.receiveShadow = true;
   scene.add(plnMesh)
 
