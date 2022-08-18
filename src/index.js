@@ -46,7 +46,8 @@ init();
 function init() {
   //scene & camera
   scene = new THREE.Scene();
-  scene.background = feet.background.value;
+  const sCol = new THREE.Color(feet.background.value.r/255, feet.background.value.g/255, feet.background.value.b/255);
+  scene.background = sCol;
 
   renderer = new THREE.WebGLRenderer( { 
     antialias: true,
@@ -136,18 +137,19 @@ function init() {
 
 
     //color
-    const noise = feet.map(fxrand(), 0, 1, -0.1, 0.1)
-    const rgb = feet.interpolateFn(feet.color.inverted ? (i/300) : 1-(i/300) + noise);
+    const noise = feet.map(fxrand(), 0, 1, -feet.noise.value, feet.noise.value)
+    const rgb = feet.interpolateFn((feet.color.inverted ? 1-(i/300) : (i/300)) + noise);
     const col = new THREE.Color(rgb.r/255, rgb.g/255, rgb.b/255);
     iMesh.setColorAt(i, col);
     
   }
+  //iMesh.position.set(-5,0,0) // <- this works for the whole mesh!  Should we loop over the loop? -- multiple flowers?
   iMesh.instanceMatrix.needsUpdate = true;
 
   //crystals 
   const crystalColor = feet.background.value
   const crystalMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(crystalColor.r, crystalColor.g, crystalColor.b),
+    color: new THREE.Color(crystalColor.r/255, crystalColor.g/255, crystalColor.b/255),
     roughness: 0.8,
     flatShading: true
   })
@@ -166,24 +168,24 @@ function init() {
   scene.add(mesh2);
 
   //stem
-  const stemCrv = new THREE.CubicBezierCurve(
-    new THREE.Vector2(0.25, -4),
-    new THREE.Vector2(7, -15),
-    new THREE.Vector2(3.5, 5 ),
-    new THREE.Vector2(2.5, 4.5)
-  )
-  const stemBuffer = new THREE.LatheBufferGeometry(stemCrv.getPoints(30), 90);
-  const col = feet.background.value
-  const stemMat = new THREE.MeshStandardMaterial( 
-    { 
-      color: new THREE.Color(col.r, col.g, col.b),
-      roughness: 0.5
-    }
-  );
-  const stemMesh = new THREE.Mesh(stemBuffer, stemMat);
-  stemMesh.castShadow = true;
-  stemMesh.receiveShadow = true;
-  //scene.add(stemMesh) //meh... better without 
+  // const stemCrv = new THREE.CubicBezierCurve(
+  //   new THREE.Vector2(0.25, -4),
+  //   new THREE.Vector2(7, -15),
+  //   new THREE.Vector2(3.5, 5 ),
+  //   new THREE.Vector2(2.5, 4.5)
+  // )
+  // const stemBuffer = new THREE.LatheBufferGeometry(stemCrv.getPoints(30), 90);
+  // const col = feet.background.value
+  // const stemMat = new THREE.MeshStandardMaterial( 
+  //   { 
+  //     color: new THREE.Color(col.r/255, col.g/255, col.b255),
+  //     roughness: 0.5
+  //   }
+  // );
+  // const stemMesh = new THREE.Mesh(stemBuffer, stemMat);
+  // stemMesh.castShadow = true;
+  // stemMesh.receiveShadow = true;
+  // //scene.add(stemMesh) //meh... better without 
 
 
   //shadow plane
