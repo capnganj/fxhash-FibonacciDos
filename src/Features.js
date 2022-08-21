@@ -34,14 +34,6 @@ class Features {
             power: 0.0,
         }
         this.setFlowerGeometry();
-
-        //crystals 
-        this.crystalGeometry = {
-            g1Tag: "",
-            g1Value: {},
-            g2Tag: "",
-            g2Value: {}
-        }
     }
 
     //map function logic from processing <3
@@ -52,6 +44,12 @@ class Features {
 
     //color palette interpolation
     interpolateFn(val) {
+        if (val > 1.0) {
+            val = 1.0
+        }
+        if (val < 0.0) {
+            val = 0.0
+        }
         let col;
         switch (this.color.name) {
             case "Ylorrd": 
@@ -180,23 +178,17 @@ class Features {
         else if (c < 0.41) { //6
             this.color.name = "Viridis" 
         }
-        else if (c < 0.49) {  //7
+        else if (c < 0.55) {  //7
             this.color.name = "Inferno" 
         }
-        else if (c < 0.56) {  //8
+        else if (c < 0.66) {  //8
             this.color.name = "Plasma" 
         }
-        else if (c < 0.63) {  //9
+        else if (c < 0.72) {  //9
             this.color.name = "Cividis" 
         }
-        else if (c < 0.72) {  //11
+        else if (c < 0.78) {  //11
             this.color.name = "Ylorbr" 
-        }
-        else if (c < 0.82) {  //13
-            this.color.name = "Cool" 
-        }
-        else if (c < 0.92) {  //13
-            this.color.name = "Warm" 
         }
         //...
         else {  //12
@@ -204,7 +196,7 @@ class Features {
         }
 
         //inverted?
-        if( fxrand() > 0.777 ) {
+        if( fxrand() > 0.666 ) {
             this.color.inverted = true;
         }
     }
@@ -213,19 +205,19 @@ class Features {
         const n = fxrand();
         if (n < 0.29) {
             this.noise.tag = "Hushed"
-            this.noise.value = this.map(n, 0, 1, 0.05, 0.1);
+            this.noise.value = this.map(n, 0, 1, 0.02, 0.04);
         }
         else if ( n < 0.59) {
             this.noise.tag = "Quiet"
-            this.noise.value = this.map(n, 0, 1, 0.12, 0.2);
+            this.noise.value = this.map(n, 0, 1, 0.04, 0.055);
         }
         else if ( n < 0.89) {
             this.noise.tag = "Loud"
-            this.noise.value = this.map(n, 0, 1, 0.2, 0.35);
+            this.noise.value = this.map(n, 0, 1, 0.05, 0.06);
         }
         else {
             this.noise.tag = "Blown Out"
-            this.noise.value = this.map(n, 0, 1, 0.35, 0.5);
+            this.noise.value = this.map(n, 0, 1, 0.06, 0.08);
         }
         
     }
@@ -265,11 +257,12 @@ class Features {
     }
 
     setFlowerGeometry() {
-        this.flowerGeometry.width = this.map(fxrand(), 0, 1,   100, 200)
-        this.flowerGeometry.height = this.map(fxrand(), 0, 1, 2, 6)
+        this.flowerGeometry.width = this.map(fxrand(), 0, 1, 180, 200)
+        this.flowerGeometry.height = this.map(fxrand(), 0, 1, 2, 5)
         this.flowerGeometry.factor = this.map(fxrand(), 0, 1, 1.48, 1.49)
-        this.flowerGeometry.power = this.map(fxrand(), 0, 1, 1.2, 3.5)
+        this.flowerGeometry.power = this.map(fxrand(), 0, 1, 1.1, 1.3)
     }
+
 }
 
 export { Features }
