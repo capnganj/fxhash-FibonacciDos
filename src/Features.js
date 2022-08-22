@@ -26,6 +26,14 @@ class Features {
         }
         this.setBackground();
 
+        //bool flippers for lighting and some color stuff
+        this.lighting = {
+            invertLighting : 0,
+            darkTops: 0,
+            doRotation: 0
+        }
+        this.setLighting();
+
         //flower geometry parameters
         this.flowerGeometry = {
             width: 0.0,
@@ -261,6 +269,17 @@ class Features {
         this.flowerGeometry.height = this.map(fxrand(), 0, 1, 2, 5)
         this.flowerGeometry.factor = this.map(fxrand(), 0, 1, 1.48, 1.49)
         this.flowerGeometry.power = this.map(fxrand(), 0, 1, 1.1, 1.3)
+    }
+
+    setLighting() {
+        const il = fxrand()
+        this.lighting.invertLighting = il < 0.34
+
+        const dt = fxrand()
+        this.lighting.darkTops = dt < 0.23
+
+        const dr = fxrand()
+        this.lighting.doRotation = dr < 0.77
     }
 
 }

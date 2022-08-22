@@ -20,7 +20,10 @@ window.$fxhashData = feet;
 window.$fxhashFeatures = {
   "Palette" : feet.color.inverted ? feet.color.name + " Invert" : feet.color.name,
   "Noise": feet.noise.tag,
-  "Background": feet.background.tag
+  "Background": feet.background.tag,
+  "Lights" : feet.lighting.invertLighting ? "Inverted" : "Palette",
+  "Align" : feet.lighting.doRotation ? "Center" : "North",
+  "Tops" : feet.lighting.darkTops ? "Light" : "Dark"
 };
 console.log(window.$fxhashFeatures);
 //console.log(feet);
@@ -74,7 +77,7 @@ function init() {
   
   document.body.appendChild( renderer.domElement );
 
-  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 100 );
+  camera = new THREE.PerspectiveCamera( 60, w.w / w.h, 0.01, 100 );
   camera.position.set( 11.5, 10, 0 );
 
   //lights
@@ -105,18 +108,19 @@ function init() {
   p2.shadow.camera.far = 1000;
   scene.add(p2)
 
-  const p3Col = feet.invertColor(feet.interpolateFn(0.33));
-  const p4Col = feet.invertColor(feet.interpolateFn(0.66));
+  const invertLighting = feet.lighting.invertLighting; 
+  const p3Col = invertLighting ? feet.invertColor(feet.interpolateFn(0.33)) : feet.interpolateFn(0.33);
+  const p4Col = invertLighting ? feet.invertColor(feet.interpolateFn(0.66)) : feet.interpolateFn(0.66);
   const p3 = new THREE.DirectionalLight(
     new THREE.Color(p3Col.r/255, p3Col.g/255, p3Col.b/255),
     0.9
   )
-  p3.position.set(1,3,10);
+  p3.position.set(1,3,5);
   const p4 = new THREE.DirectionalLight(
     new THREE.Color(p4Col.r/255, p4Col.g/255, p4Col.b/255),
     0.9
   )
-  p4.position.set(0,5,-10);
+  p4.position.set(0,5,-7);
   scene.add(p3);
   scene.add(p4);
   
@@ -143,7 +147,7 @@ function init() {
   //toon geometry
   let toonGeometry  = new THREE.DodecahedronBufferGeometry(0.5);
   const stand = new THREE.MeshStandardMaterial({
-    roughness:0.5,
+    roughness:0.45,
     metalness: 0.2,
     flatShading: true
   });
@@ -167,8 +171,8 @@ function init() {
 
   //fibGeometry loop - matrix and colors
   const fibFactor = feet.flowerGeometry.factor;
-  const doRotation = Math.round(fxrand())
-  const darkTop = Math.round(fxrand())
+  const doRotation = feet.lighting.doRotation;
+  const darkTop = feet.lighting.darkTops;
   for (let n = 0; n < numShrooms * 2  ; n++) { 
     //mesh instance geometry for snappiness and battery life
     const iMesh = new THREE.InstancedMesh(toonGeometry, stand, 400);
@@ -253,6 +257,7 @@ function init() {
 
 
 function initPostprocessing() {
+  const sizer = computeCanvasSize()
   //renderrender
   const renderPass = new RenderPass( scene, camera);
   //camera bokeh
@@ -261,8 +266,8 @@ function initPostprocessing() {
     aperture: 0.0008,
     maxblur: 0.015,
 
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: sizer.w,
+    height: sizer.h
   });
 
   const composer = new EffectComposer( renderer );
@@ -270,7 +275,8 @@ function initPostprocessing() {
   //render
   composer.addPass(renderPass);
   //camera blur
-  composer.addPass(bokehPass);
+  composer.addPass(bokehPass)
+  
 
   postprocessing.composer = composer;
   postprocessing.bokeh = bokehPass;
@@ -343,7 +349,7 @@ function render() {
   if(previewed == false && renderer.info.render.frame > 1){
     fxpreview();
     previewed = true;
-    download();
+    //download();
   } 
 
   //mesh.rotation.y += 0.001;
